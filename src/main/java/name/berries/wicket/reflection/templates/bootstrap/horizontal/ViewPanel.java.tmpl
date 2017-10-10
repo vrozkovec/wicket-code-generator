@@ -1,0 +1,174 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package ${package};
+
+${entityImport}
+${factoryImport}
+import net.databinder.models.hib.HibernateObjectModel;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.wicket.markup.html.WebMarkupContainer;
+import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.panel.Panel;
+import org.apache.wicket.model.Model;
+import org.apache.wicket.model.CompoundPropertyModel;
+import org.apache.wicket.model.IModel;
+import org.apache.wicket.model.ResourceModel;
+import org.apache.wicket.util.visit.IVisit;
+import org.apache.wicket.util.visit.IVisitor;
+
+import cz.newforms.wicket.behaviors.OnClickConfirmationPopupBehavior;
+import cz.newforms.wicket.markup.html.basic.label.InvisibleLabel;
+import cz.newforms.wicket.markup.html.basic.label.ResourceLabel;
+import cz.newforms.wicket.utilities.hibernate.Dbu;
+import de.agilecoders.wicket.core.markup.html.bootstrap.button.BootstrapLink;
+import de.agilecoders.wicket.core.markup.html.bootstrap.button.Buttons;
+import de.agilecoders.wicket.extensions.markup.html.bootstrap.icon.FontAwesomeIconType;
+
+
+/**
+ * @author rozkovec
+ */
+public class ${javaComponent} extends Panel
+{
+
+	private IModel<${className}> model;
+
+	
+	/**
+	 * Construct.
+	 * 
+	 * @param id
+	 * @param objectId
+	 */
+	public ${javaComponent}(String id, Number objectId)
+	{
+		this(id, new HibernateObjectModel<${className}>(${className}.class, objectId));
+	}
+
+	/**
+	 * Construct.
+	 * 
+	 * @param id
+	 * @param model
+	 */
+	public ${javaComponent}(String id, IModel<${className}> model)
+	{
+		super(id);
+		this.model = model;
+	}
+
+	@Override
+	protected void onInitialize()
+	{
+		super.onInitialize();
+
+		add(new Label("header", new ResourceModel("${classHeaderKey}", "${classHeaderDefaultValue}")));
+
+		WebMarkupContainer container;
+		add(container = new WebMarkupContainer("entity", new CompoundPropertyModel<${className}>(model)));
+		    	
+#foreach( $wrapper in $columns )
+		container.add(new InvisibleLabel("${wrapper.propertyExpression}"));
+		container.add(new Label("${wrapper.propertyExpression}-label", new ResourceModel("${wrapper.resourceKey}", "${wrapper.nameCapitalized}")));
+
+#end
+		
+
+		BootstrapLink<${className}> listLink;
+		add(listLink = new BootstrapLink<${className}>("list", model, Buttons.Type.Info)
+		{
+			@Override
+			public void onClick()
+			{
+				showListPanel();
+			}
+		}.setIconType(FontAwesomeIconType.list_alt));
+		listLink.setLabel(new ResourceModel("${listRecordsKey}", "${listRecordsDefaultValue}"));
+
+		BootstrapLink<${className}> newRecordButton;
+		add(newRecordButton = new BootstrapLink<${className}>("create", model, Buttons.Type.Primary)
+		{
+			@Override
+			public void onClick()
+			{
+				visitParents(${javaComponent}.class, new IVisitor<${javaComponent}, Void>()
+				{
+					public void component(${javaComponent} panel, IVisit<Void> visit)
+					{
+						panel.replaceWith(${factoryComponent}.newEditor(panel.getId()));
+						visit.stop();
+					}
+				});
+			}
+		}.setIconType(FontAwesomeIconType.plus));
+		newRecordButton.setLabel(new ResourceModel("${createRecordKey}", "${createRecordDefaultValue}"));
+
+
+		BootstrapLink<${className}> editButton;
+		add(editButton = new BootstrapLink<${className}>("edit", model, Buttons.Type.Primary)
+		{
+			@Override
+			public void onClick()
+			{
+				visitParents(${javaComponent}.class, new IVisitor<${javaComponent}, Void>()
+				{
+					public void component(${javaComponent} panel, IVisit<Void> visit)
+					{
+						panel.replaceWith(${factoryComponent}.newEditor(panel.getId(),
+							getModelObject().getId()));
+						visit.stop();
+					}
+				});
+			}
+		}.setIconType(FontAwesomeIconType.edit));
+		editButton.setLabel(new ResourceModel("${editRecordKey}", "${editRecordDefaultValue}"));
+
+		BootstrapLink<${className}> deleteButton;
+		add(deleteButton = new BootstrapLink<${className}>("delete", model, Buttons.Type.Danger)
+		{
+			@Override
+			public void onClick()
+			{
+				Dbu.delete(getModelObject());
+				
+				getSession().info(getString("${deletedRecordMessageKey}", Model.of(""), "${deletedRecordMessageDefaultValue}"));
+				
+				showListPanel();
+			}
+		}.setIconType(FontAwesomeIconType.times));
+		
+		deleteButton.add(OnClickConfirmationPopupBehavior.get());
+		deleteButton.setLabel(new ResourceModel("${deleteRecordKey}", "${deleteRecordDefaultValue}"));
+	}
+
+	protected void showListPanel()
+	{
+		replaceWith(new ${javaComponentList}(getId()));
+	}
+
+	@Override
+	protected void detachModel()
+	{
+		super.detachModel();
+		if (model != null)
+		{
+			model.detach();
+		}
+	}
+}

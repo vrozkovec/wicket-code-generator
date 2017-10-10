@@ -1,0 +1,34 @@
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+	<wicket:panel>
+		
+		<wicket:enclosure child="list">
+			<div class="well">
+				<a wicket:id="list"></a>
+			</div>
+		</wicket:enclosure>
+	
+		<form wicket:id="form">
+			<fieldset>
+				<legend wicket:id="legend"></legend>
+				#foreach( $wrapper in $fields )
+				
+					<div class="row-fluid">
+						<div class="span12">
+							${wrapper.htmlString}
+							<span wicket:id="${wrapper.name}-help"></span>
+						</div>
+					</div>
+				#end
+
+				<div wicket:id="bottomPlug">
+				</div>
+			</fieldset>
+			<div class="form-actions">
+				<button type="submit" wicket:id="submit"></button>
+				<a wicket:id="delete"></a>
+			</div>
+		</form>
+	</wicket:panel>
+</body>
+</html>

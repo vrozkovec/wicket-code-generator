@@ -1,0 +1,8 @@
+/.settings
+/target
+/.classpath
+/.project
+/bin
+/velocity.log
+/velocity.log.1
+/hs_err_*

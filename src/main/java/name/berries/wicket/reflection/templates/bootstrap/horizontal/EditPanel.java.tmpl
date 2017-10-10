@@ -1,0 +1,233 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package ${package};
+
+${entityImport}
+
+${requiredImports}
+
+import java.util.*;
+import java.math.*;
+
+import net.databinder.components.hib.DataForm;
+import net.databinder.models.hib.HibernateObjectModel;
+
+import org.apache.wicket.extensions.yui.calendar.DateField;
+import org.apache.wicket.*;
+import org.apache.wicket.markup.*;
+import org.apache.wicket.markup.html.*;
+import org.apache.wicket.markup.html.form.*;
+import org.apache.wicket.markup.html.panel.*;
+import org.apache.wicket.model.*;
+
+import cz.newforms.wicket.behaviors.OnClickConfirmationPopupBehavior;
+import cz.newforms.wicket.markup.html.basic.label.ResourceLabel;
+import cz.newforms.wicket.markup.html.form.bootstrap.BootstrapFormRowBorder;
+import cz.newforms.wicket.utilities.hibernate.Dbu;
+import cz.newforms.wicket.markup.html.form.UniqueStringFieldValidator;
+import name.berries.wicket.bootstrap.reflection.components.IModelUtils;
+import de.agilecoders.wicket.core.markup.html.bootstrap.button.BootstrapButton;
+import de.agilecoders.wicket.core.markup.html.bootstrap.button.BootstrapLink;
+import de.agilecoders.wicket.core.markup.html.bootstrap.button.Buttons;
+import de.agilecoders.wicket.extensions.markup.html.bootstrap.form.select.BootstrapMultiSelect;
+import de.agilecoders.wicket.extensions.markup.html.bootstrap.form.DateTextField;
+import de.agilecoders.wicket.extensions.markup.html.bootstrap.icon.FontAwesomeIconType;
+
+/**
+ * @author rozkovec
+ */
+public class ${javaComponent} extends Panel implements IModelUtils<${className}>
+{
+
+	private DataForm<${className}> form;
+	private HibernateObjectModel<${className}> model;
+
+	/**
+	 * Construct.
+	 * 
+	 * @param id
+	 * @param model
+	 */
+	public ${javaComponent}(String id, HibernateObjectModel<${className}> model)
+	{
+		super(id);
+		this.model = model;
+	}
+	
+	/**
+	 * Construct.
+	 * 
+	 * @param id
+	 * @param objectId
+	 */
+	public ${javaComponent}(String id, Number objectId)
+	{
+		this(id, new HibernateObjectModel<${className}>(${className}.class, objectId));
+	}
+
+	/**
+	 * Construct.
+	 * 
+	 * @param id
+	 */
+	public ${javaComponent}(String id)
+	{
+		super(id);
+		model = new HibernateObjectModel<${className}>(${className}.class);
+	}
+
+	@Override
+	protected void onInitialize()
+	{
+		super.onInitialize();
+		
+		add(form = new DataForm<${className}>("form",model)
+		{
+		
+			@Override
+			protected void onBeforeSave(HibernateObjectModel<${className}> model)
+			{
+				super.onBeforeSave(model);
+
+				${javaComponent}.this.onBeforeSave(model);
+			}
+			
+			@Override
+			protected void onSubmit()
+			{
+				boolean isFirstSave = isEditMode() == false;
+				onBeforeSubmit();
+				super.onSubmit();
+				onAfterSubmit();
+				
+				//clearPersistentObject();
+				if (!hasError())
+					if (isFirstSave)
+						getSession().info(getString("${createdRecordMessageKey}", Model.of(""), "${createdRecordMessageDefaultValue}"));
+					else 
+						getSession().info(getString("${updatedRecordMessageKey}", Model.of(""), "${updatedRecordMessageDefaultValue}"));
+				
+			}
+		});
+		form.add(new ResourceLabel("legend", "${classResourceKey}","${className}"));
+
+		#foreach( $wrapper in $fields )
+		
+#if ( $wrapper.enumeration )
+		${wrapper.wicketComponent}${wrapper.generics} ${wrapper.name} = new ${wrapper.wicketComponent}${wrapper.generics}("${wrapper.propertyExpression}", Arrays.asList(${wrapper.enumerationClass}.values()), new EnumChoiceRenderer${wrapper.generics}(this));
+#else
+		${wrapper.wicketComponent}${wrapper.generics} ${wrapper.name} = new ${wrapper.wicketComponent}${wrapper.generics}("${wrapper.propertyExpression}");
+#end
+#if ( $wrapper.unique )
+		${wrapper.name}.add(new UniqueStringFieldValidator(${className}.class, "${wrapper.name}"));
+#end
+		${wrapper.name}.setLabel(new ResourceModel("${wrapper.resourceKey}", "${wrapper.nameCapitalized}"));
+#if ( $wrapper.required )
+		${wrapper.name}.setRequired(true);
+#else
+		${wrapper.name}.setRequired(false);
+#end
+		BootstrapFormRowBorder.addComponent(form, ${wrapper.name}, new ResourceModel("${wrapper.resourceHelpKey}", ""));
+		#end
+		
+		add(newListButton("list"));
+
+		BootstrapButton submitButton;
+		form.add(submitButton = new BootstrapButton("submit", Buttons.Type.Primary));
+		submitButton.setIconType(FontAwesomeIconType.check);
+		if (isEditMode())
+			submitButton.setLabel(new ResourceModel("${updateRecordKey}", "${updateRecordDefaultValue}"));
+		else
+			submitButton.setLabel(new ResourceModel("${saveRecordKey}", "${saveRecordDefaultValue}"));
+
+
+		BootstrapLink<${className}> deleteButton;
+		form.add(deleteButton = new BootstrapLink<${className}>("delete", model, Buttons.Type.Danger)
+		{
+			@Override
+			public void onClick()
+			{
+				Dbu.delete(getModelObject());
+				showListPanel();
+			}
+		}.setIconType(FontAwesomeIconType.times));
+		deleteButton.add(OnClickConfirmationPopupBehavior.get());
+		deleteButton.setLabel(new ResourceModel("${deleteRecordKey}", "${deleteRecordDefaultValue}"));
+		deleteButton.setVisible(isEditMode());
+		
+		form.add(newFormPlugPanel("bottomPlug"));
+	}
+
+	protected Component newFormPlugPanel(String id)
+	{
+		return new WebMarkupContainer(id);
+	}
+	
+	protected Component newListButton(String id)
+	{
+		BootstrapLink<${className}> listButton;
+		add(listButton = new BootstrapLink<${className}>(id, model, Buttons.Type.Info)
+		{
+			@Override
+			public void onClick()
+			{
+				showListPanel();
+			}
+		}.setIconType(FontAwesomeIconType.list_alt));
+		listButton.setLabel(new ResourceModel("${listRecordsKey}", "${listRecordsDefaultValue}"));
+		return listButton;
+	}
+
+	protected void onBeforeSave(HibernateObjectModel<${className}> model)
+	{
+	}
+
+	protected void showListPanel()
+	{
+		replaceWith(new ${javaComponentList}(getId()));
+	}
+
+	protected void onBeforeSubmit()
+	{
+	}
+	
+	protected void onAfterSubmit()
+	{
+		if (!form.hasError())
+			showListPanel();
+	}
+	
+	public HibernateObjectModel<${className}> getModel()
+	{
+		return model;
+	}
+
+	protected DataForm<${className}> getForm()
+	{
+		return form;
+	}
+	
+	@Override
+	protected void detachModel()
+	{
+		super.detachModel();
+		if (model != null)
+		{
+			model.detach();
+		}
+	}
+}

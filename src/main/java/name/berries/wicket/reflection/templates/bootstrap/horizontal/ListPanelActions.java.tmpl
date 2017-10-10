@@ -1,0 +1,112 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package ${package};
+
+${entityImport}
+
+${factoryImport}
+import java.util.ArrayList;
+import java.util.List;
+import net.databinder.models.hib.HibernateObjectModel;
+
+import org.apache.wicket.markup.html.WebMarkupContainer;
+import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.panel.Panel;
+import org.apache.wicket.model.CompoundPropertyModel;
+import org.apache.wicket.model.IModel;
+import org.apache.wicket.model.Model;
+import org.apache.wicket.model.ResourceModel;
+import org.apache.wicket.util.visit.IVisit;
+import org.apache.wicket.util.visit.IVisitor;
+
+import cz.newforms.wicket.behaviors.OnClickConfirmationPopupBehavior;
+import cz.newforms.wicket.markup.html.basic.label.ResourceLabel;
+import cz.newforms.wicket.utilities.hibernate.Dbu;
+import de.agilecoders.wicket.core.markup.html.bootstrap.button.BootstrapLink;
+import de.agilecoders.wicket.core.markup.html.bootstrap.button.Buttons;
+import de.agilecoders.wicket.extensions.markup.html.bootstrap.icon.FontAwesomeIconType;
+
+/**
+ * @author rozkovec
+ */
+class ${javaComponent} extends Panel
+{
+
+	private IModel<${className}> model;
+
+	/**
+	 * Construct.
+	 * 
+	 * @param id
+	 * @param model
+	 */
+	public ${javaComponent}(String id, IModel<${className}> model)
+	{
+		super(id);
+		this.model = model;
+	}
+
+	@Override
+	protected void onInitialize()
+	{
+		super.onInitialize();
+		
+		add(new BootstrapLink<${className}>("edit", model, Buttons.Type.Primary)
+		{
+			@Override
+			public void onClick()
+			{
+				visitParents(${javaComponentList}.class, new IVisitor<${javaComponentList}, Void>()
+				{
+					public void component(${javaComponentList} panel, IVisit<Void> visit)
+					{
+						panel.replaceWith(${factoryComponent}.newEditor(panel.getId(),
+							getModelObject().getId()));
+						visit.stop();
+					}
+				});
+			}
+		}.setIconType(FontAwesomeIconType.edit));
+
+		add(new BootstrapLink<${className}>("view", model, Buttons.Type.Info)
+		{
+			@Override
+			public void onClick()
+			{
+				visitParents(${javaComponentList}.class, new IVisitor<${javaComponentList}, Void>()
+				{
+					public void component(${javaComponentList} panel, IVisit<Void> visit)
+					{
+						panel.replaceWith(${factoryComponent}.newView(panel.getId(),
+							getModelObject().getId()));
+						visit.stop();
+					}
+				});
+			}
+		}.setIconType(FontAwesomeIconType.list_alt));
+
+		add(new BootstrapLink<${className}>("delete", model, Buttons.Type.Danger)
+		{
+			@Override
+			public void onClick()
+			{
+				getSession().info(getString("${deletedRecordMessageKey}", Model.of(""), "${deletedRecordMessageDefaultValue}"));
+				Dbu.delete(getModelObject());
+			}
+		}.setIconType(FontAwesomeIconType.times).add(OnClickConfirmationPopupBehavior.get()));
+	}
+}

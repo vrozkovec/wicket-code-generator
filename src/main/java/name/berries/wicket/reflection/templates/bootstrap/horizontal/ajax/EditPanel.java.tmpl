@@ -38,11 +38,13 @@ import org.apache.wicket.model.*;
 import cz.newforms.wicket.behaviors.OnClickConfirmationPopupBehavior;
 import cz.newforms.wicket.markup.html.basic.label.ResourceLabel;
 import cz.newforms.wicket.markup.html.panel.AjaxPanel;
+import cz.newforms.wicket.markup.html.form.AjaxNotificationPanel;
 import cz.newforms.wicket.markup.html.form.bootstrap.BootstrapFormRowBorder;
 import cz.newforms.wicket.utilities.hibernate.Dbu;
 import cz.newforms.wicket.markup.html.form.UniqueStringFieldValidator;
 import name.berries.wicket.bootstrap.reflection.components.IModelUtils;
 
+import de.agilecoders.wicket.core.markup.html.bootstrap.button.BootstrapAjaxButton;
 import de.agilecoders.wicket.core.markup.html.bootstrap.button.BootstrapAjaxLink;
 import de.agilecoders.wicket.core.markup.html.bootstrap.button.BootstrapButton;
 import de.agilecoders.wicket.core.markup.html.bootstrap.button.BootstrapLink;
@@ -150,8 +152,24 @@ public class ${javaComponent} extends AjaxPanel implements IModelUtils<${classNa
 		
 		add(newListButton("list"));
 
-		BootstrapButton submitButton;
-		form.add(submitButton = new BootstrapButton("submit", Buttons.Type.Primary));
+		BootstrapAjaxButton submitButton;
+		form.add(submitButton = new BootstrapAjaxButton("submit", Buttons.Type.Primary)
+		{
+			@Override
+			protected void onError(AjaxRequestTarget target)
+			{
+				super.onError(target);
+				AjaxNotificationPanel.notifyAll(target, this);
+			}
+					
+			@Override
+			protected void onAfterSubmit(AjaxRequestTarget target)
+			{
+				super.onAfterSubmit(target);
+				showListPanel(target);
+			}
+
+		});
 		submitButton.setIconType(FontAwesomeIconType.check);
 		if (isEditMode())
 			submitButton.setLabel(new ResourceModel("${updateRecordKey}", "${updateRecordDefaultValue}"));

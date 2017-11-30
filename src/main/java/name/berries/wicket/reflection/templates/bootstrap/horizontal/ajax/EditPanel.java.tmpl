@@ -166,6 +166,7 @@ public class ${javaComponent} extends AjaxPanel implements IModelUtils<${classNa
 			protected void onAfterSubmit(AjaxRequestTarget target)
 			{
 				super.onAfterSubmit(target);
+				AjaxNotificationPanel.notifyAll(target, this);
 				showListPanel(target);
 			}
 

@@ -42,7 +42,7 @@ public class EditableWhenNew extends Behavior
 				if (c instanceof IModelUtils<?>)
 				{
 					IModelUtils<?> util = (IModelUtils<?>)c;
-					c.setEnabled(!util.isEditMode());
+					component.setEnabled(!util.isEditMode());
 					r.stop();
 				}
 			}

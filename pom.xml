@@ -21,9 +21,9 @@
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>name.berries</groupId>
-	<artifactId>code-generator</artifactId>
+	<artifactId>wicket-code-generator</artifactId>
 	<packaging>war</packaging>
-	<version>1.0-SNAPSHOT</version>
+	<version>8.0-SNAPSHOT</version>
 		<!-- TODO project name  -->
 	<name>quickstart</name>
 	<description></description>
